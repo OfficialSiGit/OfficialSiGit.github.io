@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#061a36">
+<title>Official SiGit - Berita, Musik, Video dan Hiburan</title>
+<meta name="description" content="Portal Official SiGit: berita, musik, video, hiburan dan TV streaming.">
+<style>
+:root{--navy:#061a36;--blue:#0759cf;--red:#f21e32;--bg:#eef3fa;--text:#172033}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+a{text-decoration:none;color:inherit}
+.top{background:#050a13;color:#fff;padding:8px 3%;font-size:12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.weather{color:#9bcaff}
+.brand{background:linear-gradient(100deg,#06152c,#07458f,#06152c);color:#fff;padding:18px 3%;display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:3px solid var(--red)}
+.logo{font-size:clamp(23px,4vw,37px);font-weight:900;white-space:nowrap}
+.logo .red{color:#ff263e}
+.tagline{font-size:10px;letter-spacing:1px;margin-top:5px}
+.search{display:flex;max-width:350px;width:100%}
+.search input{min-width:0;width:100%;padding:11px;border:0;border-radius:6px 0 0 6px}
+.search button{border:0;background:var(--blue);color:white;padding:0 15px}
+nav{background:var(--navy);color:#fff;border-bottom:3px solid var(--red);display:flex;overflow-x:auto;white-space:nowrap}
+nav a{padding:13px 14px;font-size:12px;font-weight:bold}
+nav a:first-child,nav a:hover{background:var(--blue)}
+.container{max-width:1200px;margin:15px auto;padding:0 12px}
+.promo{background:linear-gradient(100deg,#0876ec,#061a36);color:#fff;padding:17px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.promo strong{font-size:clamp(18px,3vw,27px)}
+.promo p{margin:4px 0 0;font-size:13px}
+.store{background:white;color:#111;padding:10px;border-radius:6px;font-weight:bold;font-size:12px}
+.columns{display:grid;grid-template-columns:1.5fr 1fr 220px;gap:13px;margin-top:14px}
+.box{background:white;border:1px solid #dce4ef;border-radius:10px;overflow:hidden}
+.hero{min-height:330px;background:linear-gradient(0deg,#000d,transparent 75%),linear-gradient(130deg,#0879dc,#061a36 65%,#e51d37);color:#fff;display:flex;align-items:flex-end;padding:18px}
+.label{background:var(--red);padding:5px 9px;font-size:11px;font-weight:bold;border-radius:4px}
+.hero h1{font-size:clamp(23px,3vw,32px);line-height:1.15;margin:12px 0}
+.meta{font-size:12px;color:#dbe8f8}
+.section{padding:13px}
+.heading{display:flex;justify-content:space-between;align-items:center;font-size:17px;font-weight:bold;margin:0 0 9px}
+.heading a{color:var(--blue);font-size:12px}
+.news{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #edf0f5}
+.thumb{width:88px;height:66px;flex-shrink:0;border-radius:7px;background:linear-gradient(135deg,#087bff,#061a36,#f21e32);display:grid;place-items:center;color:#fff;font-size:23px}
+.news h3{font-size:13px;line-height:1.35;margin:2px 0 5px}
+.news p{font-size:11px;color:#68758a;margin:0}
+.ad{min-height:180px;display:grid;place-items:center;text-align:center;padding:12px;background:linear-gradient(140deg,#075dd5,#061a36);color:#ffe64a;border:2px solid var(--red);border-radius:8px;font-size:20px;font-weight:bold}
+.ad small{display:block;color:white;font-size:12px;font-weight:normal}
+.popular{margin-top:13px;padding:13px;background:#fff;border-radius:10px}
+.popular li{font-size:12px;padding:7px 0;border-bottom:1px solid #edf0f5}
+.topics,.videos{margin-top:17px}
+.topic-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.topic{height:78px;padding:8px;display:flex;align-items:flex-end;border-radius:8px;color:white;font-weight:bold;font-size:12px;background:linear-gradient(140deg,#087bff,#061a36 65%,#f21e32)}
+.video-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.video-thumb{height:110px;background:linear-gradient(130deg,#087bff,#061a36 60%,#f21e32);border-radius:8px;display:grid;place-items:center;color:white;font-size:28px}
+.video h3{font-size:13px;margin:6px 0}
+.video p{font-size:11px;color:#68758a;margin:0}
+.banner{background:linear-gradient(100deg,#087bff,#061a36);border:2px solid var(--red);border-radius:8px;padding:16px;margin:18px 0;color:#ffe64a;text-align:center;font-size:clamp(17px,3vw,25px);font-weight:bold}
+.banner small{display:block;color:white;font-size:12px;font-weight:normal}
+footer{background:#050d19;color:white;border-top:3px solid var(--red)}
+.footgrid{max-width:1200px;margin:auto;padding:24px 15px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:20px}
+.footgrid h3{font-size:14px}
+.footgrid p,.footgrid a{font-size:12px;color:#c4d0e0}
+.footgrid a{display:block;margin:7px 0}
+.copyright{text-align:center;border-top:1px solid #263247;padding:13px;font-size:11px;color:#b7c5d8}
+.mobile{display:none}
+@media(max-width:850px){
+.columns{grid-template-columns:1fr 1fr}
+.side{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.popular{margin-top:0}.topic-grid{grid-template-columns:repeat(4,1fr)}
+.footgrid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+.top{font-size:10px}
+.brand{padding:13px 10px;gap:8px}
+.logo{font-size:22px}.tagline{font-size:8px;letter-spacing:0}
+.search{width:38px;flex-shrink:0}.search input{display:none}
+.search button{height:38px;border-radius:6px;padding:0 12px}
+nav a{padding:12px 10px;font-size:11px}
+.container{padding:0 9px;margin:10px auto}
+.promo{padding:12px}.store{font-size:10px;padding:8px}
+.columns{display:flex;flex-direction:column;gap:10px}
+.hero{min-height:285px;padding:14px}.hero h1{font-size:24px}
+.side{display:flex;flex-direction:column}
+.ad{min-height:105px;font-size:18px}
+.topic-grid{grid-template-columns:repeat(4,1fr);gap:6px}
+.topic{height:70px;font-size:11px;padding:6px}
+.video-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+.video-thumb{height:100px}
+.footgrid{grid-template-columns:1fr 1fr;gap:12px;padding:18px 12px}
+.mobile{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ccd5e3;z-index:10}
+.mobile a{text-align:center;padding:8px 2px;font-size:10px;color:#0759cf}
+body{padding-bottom:58px}
+}
+</style>
+</head>
+<body>
+<div class="top">
+<span id="clock">Official SiGit</span>
+<span class="weather">☁ Way Kanan · Cuaca akan dihubungkan</span>
+<span>Subuh · Dzuhur · Ashar · Maghrib · Isya</span>
+</div>
+<header class="brand">
+<a href="index.html">
+<div class="logo">▶ Official <span class="red">SiGit</span></div>
+<div class="tagline">BERITA • MUSIK • VIDEO • HIBURAN • TV STREAMING</div>
+</a>
+<form class="search" onsubmit="event.preventDefault();alert('Pencarian akan diaktifkan setelah sistem artikel tersedia.')">
+<input placeholder="Cari berita, video, musik..." aria-label="Pencarian">
+<button type="submit">⌕</button>
+</form>
+</header>
+<nav>
+<a href="index.html">⌂ BERANDA</a><a href="#berita">BERITA</a><a href="#dunia">DUNIA</a><a href="#ekonomi">EKONOMI</a><a href="#teknologi">TEKNOLOGI</a><a href="#otomotif">OTOMOTIF</a><a href="#musik">MUSIK</a><a href="#video">VIDEO</a><a href="#hiburan">HIBURAN</a><a href="#tv">TV STREAMING</a>
+</nav>
+<main class="container">
+<section class="promo">
+<div><strong>▶ Official <span style="color:#ff3045">SiGit TV</span></strong><p>Streaming berita, musik, drama dan TV Indonesia</p></div>
+<a class="store" href="#aplikasi">▶ Google Play</a>
+</section>
+<div class="columns">
+<section class="box hero">
+<div><span class="label">BERITA UTAMA</span><h1>Selamat Datang di Website Baru Official SiGit</h1><div class="meta">Portal berita, musik, video dan hiburan</div></div>
+</section>
+<section class="box section" id="berita">
+<div class="heading">Berita Terbaru <a href="#berita">Lihat Semua ›</a></div>
+<article class="news"><div class="thumb">📰</div><div><h3>Berita terbaru Official SiGit</h3><p>Konten contoh · Menunggu artikel</p></div></article>
+<article class="news"><div class="thumb">🌏</div><div><h3>Informasi nasional dan dunia</h3><p>Kategori berita</p></div></article>
+<article class="news"><div class="thumb">📈</div><div><h3>Ekonomi dan teknologi terkini</h3><p>Kategori berita</p></div></article>
+<article class="news"><div class="thumb">🎬</div><div><h3>Video, musik dan hiburan</h3><p>Official SiGit</p></div></article>
+</section>
+<aside class="side">
+<div class="ad">Pasang Iklan Anda Di Sini<small>Slot iklan 300 × 250</small></div>
+<div class="popular"><div class="heading">Berita Populer</div><ol><li>Berita nasional terbaru</li><li>Informasi dunia</li><li>Teknologi terbaru</li><li>Drama pendek populer</li><li>Lagu viral dan trending</li></ol></div>
+</aside>
+</div>
+<section class="topics">
+<div class="heading">Topik Pilihan <a href="#topik">Lihat Semua ›</a></div>
+<div class="topic-grid" id="topik">
+<a class="topic" href="#berita">Berita</a><a class="topic" href="#dunia">Dunia</a><a class="topic" href="#ekonomi">Ekonomi</a><a class="topic" href="#teknologi">Teknologi</a><a class="topic" href="#otomotif">Otomotif</a><a class="topic" href="#musik">Musik</a><a class="topic" href="#video">Video</a><a class="topic" href="#hiburan">Hiburan</a>
+</div>
+</section>
+<section class="videos" id="video">
+<div class="heading">Video Terbaru <a href="#video">Lihat Semua ›</a></div>
+<div class="video-grid">
+<article class="video"><div class="video-thumb">▶</div><h3>Musik dan video terbaru</h3><p>Official SiGit</p></article>
+<article class="video"><div class="video-thumb">▶</div><h3>Cover musik pilihan</h3><p>Official SiGit Musik</p></article>
+<article class="video"><div class="video-thumb">▶</div><h3>Hiburan dan drama</h3><p>Official SiGit</p></article>
+<article class="video"><div class="video-thumb">▶</div><h3>Berita dalam video</h3><p>Official SiGit News</p></article>
+</div>
+</section>
+<div class="banner">Pasang Iklan Banner Anda Di Sini<small>Slot banner 728 × 90</small></div>
+</main>
+<footer>
+<div class="footgrid">
+<section><div class="logo">▶ Official <span class="red">SiGit</span></div><p>Portal berita, musik, video, hiburan dan TV streaming.</p></section>
+<section><h3>Kategori</h3><a href="#berita">Berita</a><a href="#ekonomi">Ekonomi</a><a href="#musik">Musik</a><a href="#video">Video</a></section>
+<section><h3>Tentang</h3><a href="#tentang">Tentang Kami</a><a href="#privasi">Kebijakan Privasi</a><a href="#kontak">Kontak</a></section>
+<section><h3>Admin</h3><a href="admin.html">Panel Admin</a><p>Panel admin perlu backend agar postingan tersimpan dan diterbitkan.</p></section>
+</div>
+<div class="copyright">© 2026 Official SiGit. Semua Hak Dilindungi.</div>
+</footer>
+<nav class="mobile">
+<a href="index.html">⌂<br>Beranda</a><a href="#video">▷<br>Video</a><a href="#berita">▤<br>Berita</a><a href="#tv">▣<br>TV</a><a href="admin.html">☰<br>Admin</a>
+</nav>
+<script>
+function jam(){document.getElementById('clock').textContent=new Date().toLocaleString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+jam();setInterval(jam,1000);
+</script>
+</body>
+</html>
