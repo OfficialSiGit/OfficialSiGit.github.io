@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#061a36">
+<title>Panel Admin - Official SiGit</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#edf2f9;color:#18243a;font-family:Arial,sans-serif;padding-bottom:75px}
+header{background:linear-gradient(120deg,#06152c,#0759cf);color:white;padding:20px 16px;border-bottom:4px solid #f21e32}
+header a{color:#dceaff;text-decoration:none;font-size:13px}
+header h1{font-size:24px;margin:15px 0 5px}
+header p{font-size:13px;margin:0;color:#dceaff}
+main{max-width:600px;margin:14px auto;padding:0 12px}
+.notice{padding:12px;background:#fff4d4;border:1px solid #e7ce83;border-radius:9px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.panel{background:white;border:1px solid #dce4ef;border-radius:12px;padding:15px;margin-bottom:13px}
+h2{font-size:17px;margin:0 0 15px}
+label{display:block;font-weight:bold;font-size:13px;margin:13px 0 6px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:white}
+textarea{min-height:150px;resize:vertical}
+button{width:100%;border:0;border-radius:8px;padding:13px;font-size:14px;font-weight:bold;margin-top:12px}
+.primary{background:#0759cf;color:white}
+.secondary{background:#e7edf7;color:#18243a}
+small{color:#68758a}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #dce4ef;display:grid;grid-template-columns:repeat(4,1fr);padding:10px 0}
+.bottom a{text-align:center;text-decoration:none;color:#0759cf;font-size:11px}
+.bottom b{display:block;font-size:20px}
+</style>
+</head>
+<body>
+<header>
+<a href="index.html">← Kembali ke website</a>
+<h1>Panel Admin</h1>
+<p>Official SiGit · Pengelolaan berita melalui HP</p>
+</header>
+
+<main>
+<div class="notice">
+<strong>Perhatian:</strong> Ini masih prototipe. Formulir belum terhubung ke database atau sistem publikasi. Draf lokal hanya tersimpan di browser perangkat ini.
+</div>
+
+<section class="panel">
+<h2>✍️ Buat Postingan Baru</h2>
+<form id="form">
+<label for="judul">Judul berita *</label>
+<input id="judul" required placeholder="Masukkan judul berita">
+
+<label for="kategori">Kategori *</label>
+<select id="kategori" required>
+<option value="">Pilih kategori</option>
+<option>Berita</option>
+<option>Dunia</option>
+<option>Ekonomi</option>
+<option>Teknologi</option>
+<option>Otomotif</option>
+<option>Musik</option>
+<option>Video</option>
+<option>Hiburan</option>
+</select>
+
+<label for="ringkasan">Ringkasan</label>
+<textarea id="ringkasan" style="min-height:80px" placeholder="Ringkasan singkat berita"></textarea>
+
+<label for="isi">Isi artikel *</label>
+<textarea id="isi" required placeholder="Tulis isi artikel lengkap di sini"></textarea>
+
+<label for="gambar">URL gambar utama</label>
+<input id="gambar" type="url" placeholder="https://alamat-gambar...">
+
+<label for="sumber">Sumber berita</label>
+<input id="sumber" placeholder="Nama sumber berita">
+
+<button class="secondary" type="button" id="simpan">Simpan Draf di HP</button>
+<button class="primary" type="submit">Lihat Pratinjau</button>
+</form>
+</section>
+
+<section class="panel">
+<h2>Status Artikel</h2>
+<p><small>Artikel terbit dan daftar draf akan ditampilkan setelah backend dan database dihubungkan.</small></p>
+</section>
+</main>
+
+<nav class="bottom">
+<a href="index.html"><b>⌂</b>Beranda</a>
+<a href="#form"><b>＋</b>Posting</a>
+<a href="#simpan"><b>▤</b>Draf</a>
+<a href="#form"><b>⚙</b>Pengaturan</a>
+</nav>
+
+<script>
+const ids=["judul","kategori","ringkasan","isi","gambar","sumber"];
+function ambilData(){
+ const d={};
+ ids.forEach(id=>d[id]=document.getElementById(id).value);
+ return d;
+}
+document.getElementById("simpan").addEventListener("click",()=>{
+ try{
+  localStorage.setItem("officialsigit_draf",JSON.stringify(ambilData()));
+  alert("Draf disimpan di browser HP ini. Belum diterbitkan ke website.");
+ }catch(e){alert("Penyimpanan lokal tidak tersedia di browser ini.");}
+});
+document.getElementById("form").addEventListener("submit",e=>{
+ e.preventDefault();
+ const d=ambilData();
+ const w=window.open("","_blank");
+ if(!w){alert("Izinkan pop-up untuk membuka pratinjau.");return;}
+ const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ w.document.write("<!DOCTYPE html><html lang='id'><meta charset='utf-8'><meta name='viewport' content='width=device-width'><title>"+esc(d.judul)+"</title><style>body{font:16px/1.7 Arial;max-width:760px;margin:25px auto;padding:0 16px;color:#18243a}h1{line-height:1.2}img{max-width:100%;border-radius:8px}</style><p>"+esc(d.kategori)+"</p><h1>"+esc(d.judul)+"</h1><p>"+esc(d.ringkasan)+"</p>"+(d.gambar?"<img src='"+esc(d.gambar)+"' alt='Gambar artikel'>":"")+"<article>"+esc(d.isi).replace(/\n/g,"<br>")+"</article><p>Sumber: "+esc(d.sumber)+"</p></html>");
+ w.document.close();
+});
+try{
+ const d=JSON.parse(localStorage.getItem("officialsigit_draf")||"null");
+ if(d)ids.forEach(id=>{if(d[id])document.getElementById(id).value=d[id];});
+}catch(e){}
+</script>
+</body>
+</html>
