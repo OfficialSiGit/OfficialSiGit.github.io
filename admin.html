@@ -1,639 +1,670 @@
 
-<?php
-require_once __DIR__ . '/auth.php';
-require_admin();
-require_once __DIR__ . '/../includes/articles.php';
-require_once __DIR__ . '/../includes/article-categories.php';
-require_once __DIR__ . '/article-upload.php';
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#071629">
+<title>Admin Official SiGit</title>
 
-$error = null;
-$title = '';
-$category = '';
-$image = '';
-$video = '';
-$summary = '';
-$banner_ad_id = '';
-$publisher = 'OfficialSiGit.com';
-$content = '';
-$editorialNote = '';
-$sourceLinks = [];
-$action = 'published';
-$scheduled_at = '';
-$scheduled_date = '';
-$scheduled_time = '';
-$watermark_mode = 'auto';
-$watermark_size = 34;
-$watermark_position = 'center';
-$media_location = '';
-$media_headline = '';
-$media_subline = '';
-$media_style = ['font'=>'Arial','location_size'=>11,'headline_size'=>26,'subline_size'=>12,'text_color'=>'#ffffff','accent_color'=>'#ffd45c','bg_color'=>'#090d16','bg_opacity'=>88,'align'=>'left','radius'=>0,'weight'=>'900','uppercase'=>true,'animation'=>'glow','watermark_animation'=>'glow'];
+<style>
+:root {
+  --bg:#07111f;
+  --panel:#10243a;
+  --panel2:#0b1d30;
+  --border:#29445e;
+  --text:#edf5ff;
+  --muted:#a9bdd2;
+  --blue:#244caa;
+  --cyan:#31d5df;
+  --yellow:#ffc94d;
+  --red:#c94b54;
+  --green:#24845d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.55 Arial,Helvetica,sans-serif;
+}
+header{
+  padding:16px;background:#0c1c30;border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:5;
+}
+.brand{font-size:18px;font-weight:800}
+.brand span{color:var(--cyan)}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.clock{font-size:12px;color:var(--cyan);text-align:right}
+nav{display:flex;gap:8px;margin-top:12px;overflow-x:auto}
+nav button{white-space:nowrap}
+main{max-width:760px;margin:auto;padding:12px}
+.card{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:13px;padding:14px;margin-bottom:14px;
+}
+h1{font-size:20px;margin:4px 0 12px}
+h2{font-size:16px;margin:0 0 12px}
+h3{font-size:14px;margin:0 0 8px}
+p{color:var(--muted)}
+label{display:block;font-size:12px;font-weight:bold;margin:13px 0 5px}
+input,select,textarea{
+  width:100%;background:#08182a;color:var(--text);
+  border:1px solid #36516c;border-radius:7px;padding:11px;
+  font:inherit;min-width:0;
+}
+input[type=file]{padding:8px}
+textarea{min-height:115px;resize:vertical}
+small,.hint{font-size:11px;color:var(--muted)}
+button{
+  border:0;border-radius:7px;padding:10px 12px;
+  font-weight:bold;font-size:12px;cursor:pointer;
+  background:var(--blue);color:white;
+}
+button:disabled{opacity:.5}
+.btn-yellow{background:var(--yellow);color:#17202a}
+.btn-green{background:var(--green)}
+.btn-red{background:var(--red)}
+.btn-gray{background:#30445b}
+.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.source-box{
+  border:1px solid #2a7181;border-left:3px solid var(--cyan);
+  padding:11px;border-radius:9px;margin-top:12px;background:#0b293b;
+}
+.source-item{border:1px solid var(--border);padding:8px;border-radius:8px;margin-top:8px}
+.article-item{
+  background:var(--panel2);border:1px solid var(--border);
+  border-radius:9px;padding:12px;margin-top:10px;
+}
+.article-item p{margin:5px 0}
+.badge{display:inline-block;padding:3px 7px;border-radius:5px;font-size:10px;font-weight:bold}
+.b-draft{background:#5a4b23;color:#ffe29b}
+.b-published{background:#174f3b;color:#a8ffce}
+.b-scheduled{background:#173f67;color:#b4dcff}
+.b-deleted{background:#672c35;color:#ffd0d4}
+.hidden{display:none!important}
+.preview{
+  background:#fff;color:#202a35;padding:18px;border-radius:8px;
+  overflow-wrap:anywhere;
+}
+.preview img,.preview video{max-width:100%;height:auto}
+footer{text-align:center;color:var(--muted);padding:20px;font-size:11px}
+hr{border:0;border-top:1px solid var(--border);margin:14px 0}
+@media(max-width:430px){
+  main{padding:9px}
+  .card{padding:12px}
+  .row{grid-template-columns:1fr}
+  .clock{max-width:150px}
+}
+</style>
+</head>
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        check_csrf();
+<body>
+<header>
+  <div class="topline">
+    <div class="brand">Official <span>SiGit</span> · Admin</div>
+    <div class="clock">
+      <div id="clock">Memuat waktu WIB…</div>
+      <div>Zona waktu: WIB (UTC+7)</div>
+    </div>
+  </div>
+  <nav>
+    <button onclick="showSection('form')">+ Artikel Baru</button>
+    <button onclick="showSection('list')">Daftar Artikel</button>
+  </nav>
+</header>
 
-        $title = trim((string)($_POST['title'] ?? ''));
-        $category = trim((string)($_POST['category'] ?? ''));
-        $image = trim((string)($_POST['image_url'] ?? ''));
-        $video = trim((string)($_POST['video_url'] ?? ''));
-        $summary = trim((string)($_POST['summary'] ?? ''));
-        $banner_ad_id = trim((string)($_POST['banner_ad_id'] ?? ''));
-        $publisher = trim((string)($_POST['publisher'] ?? 'OfficialSiGit.com'));
-        $content = trim((string)($_POST['content'] ?? ''));
-        $editorialNote = trim((string)($_POST['editorial_note'] ?? ''));
-        $sourceLinks = [];
-        $sourceLabels = is_array($_POST['source_label'] ?? null) ? $_POST['source_label'] : [];
-        $sourceUrls = is_array($_POST['source_url'] ?? null) ? $_POST['source_url'] : [];
+<main>
+  <section id="formSection">
+    <h1 id="formHeading">Tambah Artikel</h1>
 
-        foreach ($sourceLabels as $i => $label) {
-            $label = trim((string)$label);
-            $url = trim((string)($sourceUrls[$i] ?? ''));
+    <div class="card">
+      <form id="articleForm">
+        <input type="hidden" id="articleId">
 
-            if ($label === '' && $url === '') continue;
+        <label for="category">0. Kategori</label>
+        <select id="category" required>
+          <option value="">Pilih kategori berita</option>
+          <option>Berita Nasional</option>
+          <option>Berita Daerah</option>
+          <option>Berita Global</option>
+          <option>Ekonomi</option>
+          <option>Teknologi</option>
+          <option>Otomotif</option>
+          <option>Musik</option>
+          <option>Hiburan</option>
+          <option>Video</option>
+          <option>TV Streaming</option>
+        </select>
+        <small>Artikel dapat dikelompokkan berdasarkan kategori terkait.</small>
 
-            if ($label === '' || !preg_match('~^https://~i', $url)) {
-                throw new RuntimeException('Nama sumber dan URL HTTPS wajib diisi.');
-            }
+        <label for="title">1. Judul Artikel</label>
+        <input id="title" required placeholder="Masukkan judul berita">
 
-            if (mb_strlen($label, 'UTF-8') > 180 || mb_strlen($url, 'UTF-8') > 1000) {
-                throw new RuntimeException('Nama atau URL sumber terlalu panjang.');
-            }
+        <label for="imageFile">2. Upload Gambar</label>
+        <input id="imageFile" type="file" accept="image/*">
+        <small>Untuk prototipe, gambar disimpan di browser jika kapasitas mencukupi.</small>
 
-            $sourceLinks[] = ['label'=>$label, 'url'=>$url];
-        }
+        <label for="videoFile">Upload Video Lokal (opsional)</label>
+        <input id="videoFile" type="file" accept="video/*">
+        <small>File video besar sebaiknya diunggah ke penyimpanan media khusus.</small>
 
-        $action = (string)($_POST['action'] ?? 'published');
-        $scheduled_date = trim((string)($_POST['scheduled_date'] ?? ''));
-        $scheduled_time = trim((string)($_POST['scheduled_time'] ?? ''));
-        $scheduled_at = ($scheduled_date !== '' && $scheduled_time !== '')
-            ? $scheduled_date . 'T' . $scheduled_time
-            : '';
+        <label for="imageUrl">3. Link Gambar / Download Gambar</label>
+        <input id="imageUrl" type="url" placeholder="https://contoh.com/gambar.jpg">
 
-        $watermark_mode = (string)($_POST['watermark_mode'] ?? 'auto');
-        $watermark_size = (int)($_POST['watermark_size'] ?? 34);
-        $watermark_position = (string)($_POST['watermark_position'] ?? 'center');
-        $media_location = trim((string)($_POST['media_location'] ?? ''));
-        $media_headline = trim((string)($_POST['media_headline'] ?? ''));
-        $media_subline = trim((string)($_POST['media_subline'] ?? ''));
+        <label for="videoUrl">4. Embed Link Video</label>
+        <input id="videoUrl" type="url" placeholder="https://www.youtube.com/watch?v=...">
+        <small>Masukkan tautan YouTube jika artikel mempunyai video.</small>
 
-        $style_defaults = [
-            'font'=>'Arial',
-            'size'=>11,
-            'text_color'=>'#ffffff',
-            'accent_color'=>'#ffd45c',
-            'bg_color'=>'#090d16',
-            'bg_opacity'=>88,
-            'align'=>'left',
-            'radius'=>0,
-            'weight'=>'900',
-            'uppercase'=>true,
-            'animation'=>'glow'
-        ];
+        <label for="watermarkMode">Pengaturan Watermark Media</label>
+        <select id="watermarkMode">
+          <option value="auto">Otomatis — mengikuti konfigurasi</option>
+          <option value="manual">Manual — pengaturan oleh editor</option>
+          <option value="none">Tanpa watermark</option>
+        </select>
 
-        $style_fields = ['location','headline','subline'];
+        <div class="row">
+          <div>
+            <label for="watermarkSize">Ukuran watermark</label>
+            <select id="watermarkSize">
+              <option value="small">Kecil</option>
+              <option value="medium" selected>Sedang</option>
+              <option value="large">Besar</option>
+            </select>
+          </div>
+          <div>
+            <label for="watermarkPosition">Posisi watermark</label>
+            <select id="watermarkPosition">
+              <option>Bawah kanan</option>
+              <option>Bawah kiri</option>
+              <option>Atas kanan</option>
+              <option>Atas kiri</option>
+              <option>Tengah</option>
+            </select>
+          </div>
+        </div>
 
-        $media_style = [
-            'font'=>'Arial',
-            'location_size'=>11,
-            'headline_size'=>26,
-            'subline_size'=>12,
-            'text_color'=>'#ffffff',
-            'accent_color'=>'#ffd45c',
-            'bg_color'=>'#090d16',
-            'bg_opacity'=>88,
-            'align'=>'left',
-            'radius'=>0,
-            'weight'=>'900',
-            'uppercase'=>true,
-            'animation'=>'glow',
-            'watermark_animation'=>'glow'
-        ];
+        <label for="watermarkOpacity">Transparansi watermark</label>
+        <div class="row">
+          <input id="watermarkOpacity" type="range" min="10" max="100" value="70">
+          <div id="opacityLabel" class="hint">70%</div>
+        </div>
 
-        foreach ($style_fields as $field) {
-            $media_style[$field] = $style_defaults;
+        <div class="source-box">
+          <h3>Transparansi Editorial &amp; Sumber</h3>
+          <p>Catatan editorial dapat ditampilkan pada artikel untuk menjelaskan konteks, atribusi, dan sumber informasi.</p>
 
-            foreach (array_keys($style_defaults) as $key) {
-                $input = 'media_' . $field . '_' . $key;
+          <label for="editorialNote">Catatan transparansi editorial</label>
+          <textarea id="editorialNote" placeholder="Contoh: Artikel ini dirangkum dari sumber berikut dan diberi konteks tambahan."></textarea>
 
-                if (isset($_POST[$input])) {
-                    $value = $_POST[$input];
+          <div id="sources"></div>
+          <div class="actions">
+            <button type="button" onclick="addSource()">+ Tambah Sumber</button>
+          </div>
+        </div>
 
-                    $media_style[$field][$key] =
-                        $key === 'size' || $key === 'bg_opacity' || $key === 'radius'
-                        ? (int)$value
-                        : ($key === 'uppercase' ? isset($_POST[$input]) : (string)$value);
-                }
-            }
-        }
+        <label for="summary">5. Ringkasan Artikel</label>
+        <textarea id="summary" placeholder="Ringkasan yang tampil pada beranda dan hasil pencarian."></textarea>
 
-        $media_style['watermark_animation'] = (string)($_POST['watermark_animation'] ?? 'glow');
-        $media_style['font'] = $media_style['headline']['font'];
-        $media_style['location_size'] = $media_style['location']['size'];
-        $media_style['headline_size'] = $media_style['headline']['size'];
-        $media_style['subline_size'] = $media_style['subline']['size'];
-        $media_style['text_color'] = $media_style['headline']['text_color'];
-        $media_style['accent_color'] = $media_style['location']['accent_color'];
-        $media_style['bg_color'] = $media_style['headline']['bg_color'];
-        $media_style['bg_opacity'] = $media_style['headline']['bg_opacity'];
-        $media_style['align'] = $media_style['headline']['align'];
-        $media_style['radius'] = $media_style['headline']['radius'];
-        $media_style['weight'] = $media_style['headline']['weight'];
-        $media_style['uppercase'] = $media_style['headline']['uppercase'];
-        $media_style['animation'] = $media_style['headline']['animation'];
-        $media_style['editorial_note'] = $editorialNote !== '' ? $editorialNote : null;
-        $media_style['source_links'] = $sourceLinks;
+        <label for="banner">6. Iklan Banner (opsional)</label>
+        <input id="banner" type="url" placeholder="https://contoh.com/banner.jpg">
+        <small>Ini hanya menyimpan alamat banner, belum mengaktifkan sistem iklan.</small>
 
-        $uploadedImage = article_store_uploaded_image($_FILES['image_file'] ?? null);
+        <label for="publisher">7. Nama Penerbit</label>
+        <input id="publisher" value="OfficialSiGit.com">
 
-        if ($uploadedImage !== null) {
-            $image = $uploadedImage;
-        }
+        <label>8. Tanggal dan Jadwal Terbit (WIB)</label>
+        <div class="row">
+          <div>
+            <label for="publishDate">Tanggal terbit</label>
+            <input id="publishDate" type="date" required>
+          </div>
+          <div>
+            <label for="publishTime">Jam terbit (WIB)</label>
+            <input id="publishTime" type="time" required>
+          </div>
+        </div>
+        <small>Waktu yang dipilih selalu ditafsirkan sebagai WIB (Asia/Jakarta), tidak mengikuti zona waktu perangkat.</small>
 
-        $uploadedVideo = article_store_uploaded_video($_FILES['video_file'] ?? null);
+        <label for="status">Status artikel</label>
+        <select id="status">
+          <option value="published">Terbitkan sekarang</option>
+          <option value="draft">Simpan sebagai draf</option>
+          <option value="scheduled">Jadwalkan artikel</option>
+        </select>
 
-        if ($uploadedVideo !== null) {
-            $video = $uploadedVideo;
-        } else {
-            $video = article_youtube_embed_url($video);
-        }
+        <label for="body">9. Isi Artikel</label>
+        <textarea id="body" required placeholder="Tulis isi berita lengkap di sini. Pisahkan paragraf dengan baris baru."></textarea>
 
-        if ($title === '' || $content === '') {
-            throw new RuntimeException('Judul dan isi artikel wajib diisi.');
-        }
+        <div class="actions">
+          <button type="button" onclick="previewArticle()">Preview Artikel</button>
+          <button class="btn-yellow" type="submit" id="saveButton">Terbitkan</button>
+          <button class="btn-gray" type="button" onclick="resetForm()">Buat Artikel Baru</button>
+          <button class="btn-gray" type="button" onclick="showSection('list')">Daftar Artikel</button>
+        </div>
+      </form>
+    </div>
 
-        if (mb_strlen($title, 'UTF-8') > 220) {
-            throw new RuntimeException('Judul maksimal 220 karakter.');
-        }
+    <div id="previewCard" class="card hidden">
+      <h2>Preview Artikel</h2>
+      <div id="previewContent" class="preview"></div>
+      <div class="actions">
+        <button class="btn-gray" onclick="document.getElementById('previewCard').classList.add('hidden')">Tutup Preview</button>
+      </div>
+    </div>
+  </section>
 
-        if (!in_array($category, article_categories(), true)) {
-            throw new RuntimeException('Pilih salah satu kategori berita yang tersedia.');
-        }
+  <section id="listSection" class="hidden">
+    <h1>Daftar Artikel</h1>
+    <div class="card">
+      <label for="search">Cari artikel</label>
+      <input id="search" placeholder="Cari judul artikel..." oninput="renderArticles()">
 
-        if (mb_strlen($summary, 'UTF-8') > 1000) {
-            throw new RuntimeException('Ringkasan maksimal 1000 karakter.');
-        }
+      <div class="row">
+        <div>
+          <label for="filterStatus">Filter status</label>
+          <select id="filterStatus" onchange="renderArticles()">
+            <option value="">Semua status</option>
+            <option value="draft">Draf</option>
+            <option value="published">Terbit</option>
+            <option value="scheduled">Terjadwal</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterCategory">Filter kategori</label>
+          <select id="filterCategory" onchange="renderArticles()">
+            <option value="">Semua kategori</option>
+            <option>Berita Nasional</option>
+            <option>Berita Daerah</option>
+            <option>Berita Global</option>
+            <option>Ekonomi</option>
+            <option>Teknologi</option>
+            <option>Otomotif</option>
+            <option>Musik</option>
+            <option>Hiburan</option>
+            <option>Video</option>
+            <option>TV Streaming</option>
+          </select>
+        </div>
+      </div>
 
-        if (mb_strlen($publisher, 'UTF-8') > 120 || $publisher === '') {
-            throw new RuntimeException('Nama penerbit wajib diisi dan maksimal 120 karakter.');
-        }
+      <div class="actions">
+        <button onclick="resetForm();showSection('form')">+ Buat Artikel Baru</button>
+      </div>
+      <div id="articleList"></div>
+    </div>
+  </section>
 
-        if ($banner_ad_id !== '' && !preg_match('/^[0-9]{4,20}$/', $banner_ad_id)) {
-            throw new RuntimeException('ID iklan banner harus berupa angka.');
-        }
+  <div class="card">
+    <h3>Informasi Sistem</h3>
+    <p>Zona waktu panel: <strong>Asia/Jakarta (WIB, UTC+7)</strong>.</p>
+    <p id="storageNotice" class="hint">Data prototipe tersimpan di browser perangkat ini.</p>
+  </div>
+</main>
 
-        if (
-            !in_array($watermark_mode, ['auto', 'manual'], true) ||
-            $watermark_size < 10 ||
-            $watermark_size > 70 ||
-            !in_array($watermark_position, ['center', 'top-left', 'top-right', 'bottom-left', 'bottom-right'], true)
-        ) {
-            throw new RuntimeException('Pengaturan watermark tidak valid.');
-        }
+<footer>Official SiGit · Panel Admin Mobile</footer>
 
-        if (
-            mb_strlen($media_location, 'UTF-8') > 120 ||
-            mb_strlen($media_headline, 'UTF-8') > 220 ||
-            mb_strlen($media_subline, 'UTF-8') > 300
-        ) {
-            throw new RuntimeException('Teks media terlalu panjang.');
-        }
+<script>
+"use strict";
 
-        if (mb_strlen($image, 'UTF-8') > 500) {
-            throw new RuntimeException('URL gambar maksimal 500 karakter.');
-        }
+const TIME_ZONE = "Asia/Jakarta";
+const STORAGE_KEY = "officialsigit_admin_articles_v2";
+let imageData = "";
+let videoData = "";
 
-        if (!in_array($action, ['draft', 'published', 'scheduled'], true)) {
-            throw new RuntimeException('Pilihan status tidak valid.');
-        }
+function nowWIBParts() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(new Date());
 
-        if (
-            $image !== '' &&
-            !str_starts_with($image, '/') &&
-            !preg_match('~^https://~i', $image)
-        ) {
-            throw new RuntimeException(
-                'URL gambar harus diawali / atau menggunakan https://.'
-            );
-        }
-
-        if ($action === 'scheduled') {
-            if ($scheduled_at === '') {
-                throw new RuntimeException(
-                    'Pilih tanggal dan jam untuk jadwal terbit.'
-                );
-            }
-
-            $date = DateTimeImmutable::createFromFormat(
-                '!Y-m-d\TH:i',
-                $scheduled_at,
-                new DateTimeZone('Asia/Jakarta')
-            );
-
-            $date_errors = DateTimeImmutable::getLastErrors();
-
-            if (
-                !$date ||
-                ($date_errors !== false &&
-                ($date_errors['warning_count'] > 0 ||
-                 $date_errors['error_count'] > 0)) ||
-                $date->format('Y-m-d\TH:i') !== $scheduled_at
-            ) {
-                throw new RuntimeException('Tanggal atau jam tidak valid.');
-            }
-
-            if ($date <= new DateTimeImmutable('now', new DateTimeZone('Asia/Jakarta'))) {
-                throw new RuntimeException(
-                    'Jadwal terbit harus berada di masa depan.'
-                );
-            }
-
-            $status = 'scheduled';
-            $published_at = $date->format('Y-m-d H:i:s');
-
-        } elseif ($action === 'published') {
-            $status = 'published';
-
-            $published_at = (new DateTimeImmutable(
-                'now',
-                new DateTimeZone('Asia/Jakarta')
-            ))->format('Y-m-d H:i:s');
-
-        } else {
-            $status = 'draft';
-
-            $published_at = (new DateTimeImmutable(
-                'now',
-                new DateTimeZone('Asia/Jakarta')
-            ))->format('Y-m-d H:i:s');
-        }
-
-        $slug_base = article_slug($title);
-        $slug = $slug_base;
-        $suffix = 2;
-
-        $check = db()->prepare(
-            'SELECT COUNT(*) FROM articles WHERE slug = ?'
-        );
-
-        while (true) {
-            $check->execute([$slug]);
-
-            if ((int)$check->fetchColumn() === 0) {
-                break;
-            }
-
-            $slug = $slug_base . '-' . $suffix;
-            $suffix++;
-        }
-
-        $sql = 'INSERT INTO articles
-                (title, slug, category, image_url, video_url, summary, banner_ad_id, publisher, watermark_mode, watermark_size, watermark_position, media_location, media_headline, media_subline, media_style, content, status, published_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-
-        $stmt = db()->prepare($sql);
-
-        $stmt->execute([
-            $title,
-            $slug,
-            $category !== '' ? $category : 'Umum',
-            $image !== '' ? $image : null,
-            $video,
-            $summary !== '' ? $summary : null,
-            $banner_ad_id !== '' ? $banner_ad_id : null,
-            $publisher,
-            $watermark_mode,
-            $watermark_size,
-            $watermark_position,
-            $media_location !== '' ? $media_location : null,
-            $media_headline !== '' ? $media_headline : null,
-            $media_subline !== '' ? $media_subline : null,
-            json_encode($media_style, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            $content,
-            $status,
-            $published_at
-        ]);
-
-        redirect('/admin/artikel.php');
-
-    } catch (Throwable $e) {
-        $error = $e instanceof PDOException
-            ? 'Artikel gagal disimpan. Periksa struktur database dan coba lagi.'
-            : $e->getMessage();
-    }
+  const out = {};
+  parts.forEach(p => { if (p.type !== "literal") out[p.type] = p.value; });
+  return out;
 }
 
-$mediaInitialJson = json_encode(
-    ['location'=>$media_location,'headline'=>$media_headline,'subline'=>$media_subline,'style'=>$media_style],
-    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-);
-
-$stylePanel = '';
-
-$body = '<style>
-.preview-anim-glow{animation:previewGlow 2.4s ease-in-out infinite}.preview-anim-sweep{position:relative;overflow:hidden}.preview-anim-sweep:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,#fff7 48%,transparent 72%);transform:translateX(-100%);animation:previewSweep 3.2s linear infinite}.preview-anim-pulse{animation:previewPulse 2s ease-in-out infinite}.preview-anim-marquee{white-space:nowrap;animation:previewMarquee 8s linear infinite}@keyframes previewGlow{50%{filter:brightness(1.25);text-shadow:0 0 10px #fff8}}@keyframes previewSweep{to{transform:translateX(100%)}}@keyframes previewPulse{50%{opacity:.7}}@keyframes previewMarquee{0%{transform:translateX(100%)}100%{transform:translateX(-110%)}}.text-style-group{margin:12px 0;padding:12px;border:1px solid #365276;border-radius:9px}.text-style-group legend{padding:0 7px;font-weight:800}.text-style-group>input{width:100%;margin:4px 0;padding:9px;background:#091a2f;color:#fff;border:1px solid #3a5678;border-radius:6px}.style-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.style-grid label{font-size:12px}.style-grid input,.style-grid select{width:100%;margin-top:3px}.style-grid .check{display:flex;align-items:center;gap:6px}.preview-open{margin-top:10px}.media-preview-dialog{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:#020817d9}.media-preview-dialog.is-open{display:flex}.media-preview-dialog .dialog-card{width:min(920px,100%);padding:16px;border:1px solid #496789;border-radius:12px;background:#0b1b30}.media-preview-dialog .media-preview-stage{min-height:300px}.media-preview-dialog .dialog-actions{text-align:right;margin-top:10px}@media(max-width:600px){.style-grid{grid-template-columns:1fr}}.media-style-box{margin:14px 0;padding:14px;border:1px solid #365276;border-radius:10px;background:#0b1b30}.media-style-box input,.media-style-box select{margin:4px;padding:7px;background:#091a2f;color:#fff;border:1px solid #3a5678;border-radius:6px}.media-preview-box{margin:14px 0 20px;padding:14px;border:1px solid #365276;border-radius:10px;background:#0b1b30}.media-preview-box>label{display:block;margin-bottom:8px;font-weight:800}.media-preview-stage{position:relative;min-height:210px;aspect-ratio:16/9;overflow:hidden;border-radius:8px;background:linear-gradient(135deg,#173657,#372274);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:#b9c9df}.media-preview-stage:before{content:\'CONTOH PREVIEW MEDIA\';font-size:12px;letter-spacing:.12em;opacity:.7}.media-preview-stage[data-has-image="1"]:before{display:none}.media-preview-watermark{position:absolute;z-index:2;left:50%;top:50%;width:min(34%,180px);aspect-ratio:4/1;transform:translate(-50%,-50%);background:url(\'/assets/watermark-logo.png\') center/contain no-repeat;opacity:.34;pointer-events:none}.media-preview-lower{position:absolute;z-index:3;left:0;right:0;bottom:0;padding:18px 14px 11px;background:linear-gradient(transparent,#090d16ed 28%);color:#fff}.media-preview-location{display:block;color:#ffd45c;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}.media-preview-headline{display:block;margin-top:2px;font-size:clamp(14px,2vw,23px);font-weight:900;line-height:1.15;text-shadow:0 1px 2px #000}.media-preview-subline{display:block;margin-top:3px;color:#e6edf8;font-size:11px}.media-preview-note{display:block;margin-top:8px;color:#9fb1c7;font-size:11px}
-</style><div class="card"><h2>Tambah Artikel</h2>';
-
-if ($error !== null) {
-    $body .= '<div class="error">' . e($error) . '</div>';
+function currentWIBDateTime() {
+  const p = nowWIBParts();
+  return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` };
 }
 
-$body .= '
-<style>.editorial-admin-box{margin:16px 0;padding:14px;border:1px solid #3b6d86;border-left:4px solid #25e7ff;border-radius:10px;background:#0b2a40}.editorial-admin-box h3{margin:0 0 5px}.editorial-admin-box small{color:#afc2d7}.source-row{display:grid;grid-template-columns:1fr 1.4fr auto;gap:7px;margin:8px 0}.source-row input{min-width:0}@media(max-width:650px){.source-row{grid-template-columns:1fr}.source-row button{width:max-content}}</style>
-<form method="post" enctype="multipart/form-data"><input type="hidden" id="media-initial-json" value="' . e($mediaInitialJson) . '">
-<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">
+function formatWIB(iso) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: TIME_ZONE,
+    dateStyle: "long",
+    timeStyle: "short",
+    hourCycle: "h23"
+  }).format(d) + " WIB";
+}
 
-<p><label for="article-category">0. Kategori</label>
-<select name="category" id="article-category" required>' .
-article_category_options($category) . '</select>
-<small>Pilih kategori agar artikel otomatis masuk ke halaman kategori terkait.</small></p>
+/* Konversi input tanggal/jam WIB menjadi timestamp UTC yang tepat.
+   Input datetime-local/date+time tidak memiliki zona waktu bawaan,
+   sehingga kita menetapkan Asia/Jakarta secara eksplisit. */
+function wibInputToISO(date, time) {
+  if (!date || !time) return "";
+  const [y, mo, d] = date.split("-").map(Number);
+  const [h, mi] = time.split(":").map(Number);
+  return new Date(Date.UTC(y, mo - 1, d, h - 7, mi, 0)).toISOString();
+}
 
-<p><label>1. Judul artikel</label>
-<input name="title" maxlength="220" value="' . e($title) . '" required></p>
+function updateClock() {
+  document.getElementById("clock").textContent =
+    new Intl.DateTimeFormat("id-ID", {
+      timeZone: TIME_ZONE,
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23"
+    }).format(new Date()) + " WIB";
+}
+updateClock();
+setInterval(updateClock, 1000);
 
-<p><label>2. Upload gambar</label>
-<input type="file" name="image_file" accept="image/jpeg,image/png,image/webp">
-<small>Gambar JPG, PNG, WebP maksimal 5 MB. Untuk video gunakan URL embed pada kolom 4.</small></p>
+function getArticles() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+function saveArticles(items) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
 
-<p><label>Upload video lokal (opsional)</label>
-<input type="file" name="video_file" accept="video/mp4,video/webm,video/quicktime">
-<small>MP4, WebM, atau MOV. Maksimal 50 MB. Gunakan ini atau embed link video.</small></p>
+function showSection(name) {
+  document.getElementById("formSection").classList.toggle("hidden", name !== "form");
+  document.getElementById("listSection").classList.toggle("hidden", name !== "list");
+  if (name === "list") renderArticles();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
 
-<p><label>3. Link gambar / download gambar</label>
-<input name="image_url" maxlength="500" value="' . e($image) . '"
-placeholder="/gambar.jpg atau https://..."></p>
+function addSource(name = "", url = "") {
+  const box = document.createElement("div");
+  box.className = "source-item";
+  box.innerHTML = `
+    <label>Nama sumber</label>
+    <input class="source-name" placeholder="Nama media / sumber" value="">
+    <label>URL sumber</label>
+    <input class="source-url" type="url" placeholder="https://sumber-resmi.example/" value="">
+    <div class="actions"><button type="button" class="btn-red">Hapus sumber</button></div>`;
+  box.querySelector(".source-name").value = name;
+  box.querySelector(".source-url").value = url;
+  box.querySelector("button").onclick = () => box.remove();
+  document.getElementById("sources").appendChild(box);
+}
 
-<p><label>4. Embed link video</label>
-<input name="video_url" maxlength="500" value="' . e((string)$video) . '"
-placeholder="https://www.youtube.com/watch?v=...">
-<small>Link YouTube akan otomatis diubah menjadi embed.</small></p>
+function collectSources() {
+  return [...document.querySelectorAll(".source-item")].map(el => ({
+    name: el.querySelector(".source-name").value.trim(),
+    url: el.querySelector(".source-url").value.trim()
+  })).filter(s => s.name || s.url);
+}
 
-<p><label>Pengaturan watermark media</label>
-<select name="watermark_mode">
-<option value="auto"' . ($watermark_mode === 'auto' ? ' selected' : '') . '>Otomatis — mengikuti kursor di komputer</option>
-<option value="manual"' . ($watermark_mode === 'manual' ? ' selected' : '') . '>Manual — gunakan ukuran dan posisi di bawah</option>
-</select></p>
-
-<p><label>Ukuran watermark manual (%)</label>
-<input type="number" name="watermark_size" min="10" max="70" step="1" value="' . e((string)$watermark_size) . '">
-<small>10% kecil sampai 70% besar. Hanya aktif jika mode Manual dipilih.</small></p>
-
-<p><label>Posisi watermark manual</label>
-<select name="watermark_position">
-<option value="center"' . ($watermark_position === 'center' ? ' selected' : '') . '>Tengah</option>
-<option value="top-left"' . ($watermark_position === 'top-left' ? ' selected' : '') . '>Kiri atas</option>
-<option value="top-right"' . ($watermark_position === 'top-right' ? ' selected' : '') . '>Kanan atas</option>
-<option value="bottom-left"' . ($watermark_position === 'bottom-left' ? ' selected' : '') . '>Kiri bawah</option>
-<option value="bottom-right"' . ($watermark_position === 'bottom-right' ? ' selected' : '') . '>Kanan bawah</option>
-</select>
-<small>Jika otomatis dipilih, ukuran dan posisi manual disimpan sebagai cadangan.</small></p>
-
-<section class="editorial-admin-box">
-<h3>Transparansi editorial &amp; sumber</h3>
-<small>Catatan ini diisi admin dan ditampilkan di bawah artikel. Pengunjung melihat nama sumber yang dapat diklik, bukan URL mentah.</small>
-<p><label>Catatan transparansi otomatis</label>
-<textarea name="editorial_note" maxlength="1000" rows="3" placeholder="Contoh: Artikel ini dirangkum dari sumber berikut dan diberi konteks tambahan.">' . e($editorialNote) . '</textarea></p>
-<div id="source-list">
-<div class="source-row">
-<input name="source_label[]" maxlength="180" placeholder="Nama sumber" value="' . e((string)($sourceLinks[0]['label'] ?? '')) . '">
-<input name="source_url[]" type="url" maxlength="1000" placeholder="https://sumber-asli.example/" value="' . e((string)($sourceLinks[0]['url'] ?? '')) . '">
-<button type="button" class="button alt" data-remove-source>Hapus</button>
-</div>
-</div>
-<button type="button" class="button alt" data-add-source>+ Tambah sumber</button>
-</section>
-
-<p><label>5. Ringkasan artikel</label>
-<textarea name="summary" maxlength="1000" rows="4" placeholder="Ringkasan yang tampil tepat di bawah gambar atau video.">' . e($summary) . '</textarea></p>
-
-<p><label>6. ID iklan banner</label>
-<input name="banner_ad_id" inputmode="numeric" maxlength="20" value="' . e($banner_ad_id) . '" placeholder="Kosongkan untuk ID bawaan">
-<small>Opsional. Kosongkan untuk memakai ID bawaan OfficialSiGit (7748160242), atau isi ID slot iklan untuk menggantinya pada artikel ini.</small></p>
-
-<p><label>7. Nama penerbit</label>
-<input name="publisher" maxlength="120" value="' . e($publisher) . '" required></p>
-
-<p><label>8. Hari, jam, tanggal, bulan terbit artikel</label>
-<small>Pilih tahun, bulan, tanggal, jam, dan menit. Setelah itu pilih status Jadwalkan terbit.</small></p>
-
-<p id="schedule-field"><label>Tanggal terbit (WIB)</label><input type="date" name="scheduled_date" value="' . e($scheduled_date) . '"><label>Jam terbit (WIB)</label><input type="time" name="scheduled_time" value="' . e($scheduled_time) . '"><small>Pilih tanggal dan jam jika status diatur ke Terjadwal.</small></p>
-
-<p><label>Status terbit</label>
-<select name="action" id="article-action">
-<option value="published"' . ($action === 'published' ? ' selected' : '') . '>Terbitkan sekarang</option>
-<option value="draft"' . ($action === 'draft' ? ' selected' : '') . '>Simpan sebagai draft</option>
-<option value="scheduled"' . ($action === 'scheduled' ? ' selected' : '') . '>Jadwalkan terbit</option>
-</select></p>
-
-<p><label>9. Isi artikel</label>
-<textarea name="content" required>' . e($content) . '</textarea></p>
-
-<button class="button alt" type="button" data-open-article-preview>Preview Artikel</button>
-<button class="button" type="submit">10. Terbitkan</button>
-<a class="button alt" href="/admin/artikel.php">Kembali</a>
-</form></div>
-
-<script>
-(function(){
-    var list = document.getElementById("source-list");
-    var add = document.querySelector("[data-add-source]");
-    if (!list || !add) return;
-
-    add.addEventListener("click", function(){
-        var row = document.createElement("div");
-        row.className = "source-row";
-        row.innerHTML = "<input name=\"source_label[]\" maxlength=\"180\" placeholder=\"Nama sumber\"><input name=\"source_url[]\" type=\"url\" maxlength=\"1000\" placeholder=\"https://sumber-asli.example/\"><button type=\"button\" class=\"button alt\" data-remove-source>Hapus</button>";
-        list.appendChild(row);
-    });
-
-    list.addEventListener("click", function(e){
-        if (e.target.matches("[data-remove-source]")) {
-            var rows = list.querySelectorAll(".source-row");
-            if (rows.length > 1) {
-                e.target.closest(".source-row").remove();
-            } else {
-                e.target.closest(".source-row").querySelectorAll("input").forEach(function(x){
-                    x.value = "";
-                });
-            }
-        }
-    });
-})();
-</script>
-
-<script>
-(function () {
-    var action = document.getElementById("article-action");
-    var field = document.getElementById("schedule-field");
-    var dateInput = field.querySelector("[name=scheduled_date]");
-    var timeInput = field.querySelector("[name=scheduled_time]");
-
-    function updateScheduleField() {
-        field.style.display = "block";
-        dateInput.required = action.value === "scheduled";
-        timeInput.required = action.value === "scheduled";
+function readFile(file, maxBytes) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve("");
+    if (file.size > maxBytes) {
+      reject(new Error("File terlalu besar untuk prototipe penyimpanan browser."));
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("File tidak berhasil dibaca."));
+    reader.readAsDataURL(file);
+  });
+}
 
-    action.addEventListener("change", updateScheduleField);
-    updateScheduleField();
-})();
+document.getElementById("imageFile").addEventListener("change", async e => {
+  try {
+    imageData = await readFile(e.target.files[0], 1200000);
+  } catch (err) {
+    alert(err.message + " Gunakan URL gambar atau layanan penyimpanan media.");
+    e.target.value = "";
+    imageData = "";
+  }
+});
+document.getElementById("videoFile").addEventListener("change", async e => {
+  try {
+    videoData = await readFile(e.target.files[0], 500000);
+  } catch (err) {
+    alert(err.message + " Gunakan tautan video.");
+    e.target.value = "";
+    videoData = "";
+  }
+});
+
+document.getElementById("watermarkOpacity").addEventListener("input", e => {
+  document.getElementById("opacityLabel").textContent = e.target.value + "%";
+});
+document.getElementById("status").addEventListener("change", e => {
+  document.getElementById("saveButton").textContent =
+    e.target.value === "draft" ? "Simpan Draf" :
+    e.target.value === "scheduled" ? "Simpan Jadwal" : "Terbitkan";
+});
+
+function readForm() {
+  const id = document.getElementById("articleId").value || crypto.randomUUID();
+  const status = document.getElementById("status").value;
+  const scheduledISO = wibInputToISO(
+    document.getElementById("publishDate").value,
+    document.getElementById("publishTime").value
+  );
+
+  return {
+    id,
+    category: document.getElementById("category").value,
+    title: document.getElementById("title").value.trim(),
+    image: imageData || document.getElementById("imageUrl").value.trim(),
+    video: videoData || "",
+    imageUrl: document.getElementById("imageUrl").value.trim(),
+    videoUrl: document.getElementById("videoUrl").value.trim(),
+    watermarkMode: document.getElementById("watermarkMode").value,
+    watermarkSize: document.getElementById("watermarkSize").value,
+    watermarkPosition: document.getElementById("watermarkPosition").value,
+    watermarkOpacity: Number(document.getElementById("watermarkOpacity").value),
+    editorialNote: document.getElementById("editorialNote").value.trim(),
+    sources: collectSources(),
+    summary: document.getElementById("summary").value.trim(),
+    banner: document.getElementById("banner").value.trim(),
+    publisher: document.getElementById("publisher").value.trim(),
+    scheduledAt: scheduledISO,
+    status,
+    body: document.getElementById("body").value.trim(),
+    createdAt: "",
+    updatedAt: new Date().toISOString(),
+    publishedAt: ""
+  };
+}
+
+document.getElementById("articleForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = readForm();
+  if (!form.title || !form.category || !form.body || !form.scheduledAt) {
+    alert("Lengkapi kategori, judul, isi artikel, tanggal dan jam WIB.");
+    return;
+  }
+
+  const items = getArticles();
+  const existingIndex = items.findIndex(a => a.id === form.id);
+  const existing = existingIndex >= 0 ? items[existingIndex] : null;
+  form.createdAt = existing?.createdAt || new Date().toISOString();
+
+  if (form.status === "published") {
+    form.publishedAt = new Date().toISOString();
+  } else {
+    form.publishedAt = existing?.publishedAt || "";
+  }
+
+  if (existingIndex >= 0) items[existingIndex] = form;
+  else items.unshift(form);
+
+  try {
+    saveArticles(items);
+    alert(
+      form.status === "draft" ? "Draf disimpan di browser ini." :
+      form.status === "scheduled" ? "Jadwal tersimpan sebagai WIB. Prototipe ini belum menerbitkan otomatis di latar belakang." :
+      "Artikel tersimpan dalam daftar prototipe. Belum terbit ke publik karena backend belum terhubung."
+    );
+    resetForm();
+    showSection("list");
+  } catch (err) {
+    alert("Penyimpanan gagal. Ruang penyimpanan browser mungkin penuh.");
+  }
+});
+
+function resetForm() {
+  document.getElementById("articleForm").reset();
+  document.getElementById("articleId").value = "";
+  document.getElementById("formHeading").textContent = "Tambah Artikel";
+  document.getElementById("sources").innerHTML = "";
+  document.getElementById("previewCard").classList.add("hidden");
+  document.getElementById("saveButton").textContent = "Terbitkan";
+  const now = currentWIBDateTime();
+  document.getElementById("publishDate").value = now.date;
+  document.getElementById("publishTime").value = now.time;
+  document.getElementById("publisher").value = "OfficialSiGit.com";
+  imageData = "";
+  videoData = "";
+  document.getElementById("imageFile").value = "";
+  document.getElementById("videoFile").value = "";
+  showSection("form");
+}
+
+function escapeHTML(value = "") {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[c]);
+}
+
+function safeURL(value) {
+  try {
+    const u = new URL(value, location.href);
+    return ["http:", "https:", "data:"].includes(u.protocol) ? u.href : "";
+  } catch (e) { return ""; }
+}
+
+function previewArticle() {
+  const a = readForm();
+  const image = safeURL(a.image);
+  const sources = a.sources.map(s =>
+    `<li>${escapeHTML(s.name)} ${safeURL(s.url) ? `— <a href="${escapeHTML(safeURL(s.url))}" target="_blank" rel="noopener">Buka sumber</a>` : ""}</li>`
+  ).join("");
+
+  document.getElementById("previewContent").innerHTML = `
+    <small>${escapeHTML(a.category)} · ${escapeHTML(a.publisher)} · WIB</small>
+    <h2>${escapeHTML(a.title || "Judul artikel")}</h2>
+    ${image ? `<img src="${escapeHTML(image)}" alt="Gambar artikel">` : ""}
+    <p><strong>${escapeHTML(a.summary)}</strong></p>
+    <p>${escapeHTML(a.body).replace(/\n/g, "<br>")}</p>
+    ${a.editorialNote ? `<hr><h3>Catatan editorial</h3><p>${escapeHTML(a.editorialNote)}</p>` : ""}
+    ${sources ? `<h3>Sumber</h3><ul>${sources}</ul>` : ""}
+    <hr><small>Waktu jadwal: ${escapeHTML(formatWIB(a.scheduledAt))}</small>`;
+  document.getElementById("previewCard").classList.remove("hidden");
+  document.getElementById("previewCard").scrollIntoView({behavior:"smooth"});
+}
+
+function badge(status) {
+  const labels = {draft:"DRAF", published:"TERBIT", scheduled:"TERJADWAL"};
+  return `<span class="badge b-${status}">${labels[status] || escapeHTML(status)}</span>`;
+}
+
+function renderArticles() {
+  const query = document.getElementById("search").value.toLowerCase();
+  const status = document.getElementById("filterStatus").value;
+  const category = document.getElementById("filterCategory").value;
+  const items = getArticles().filter(a =>
+    a.title.toLowerCase().includes(query) &&
+    (!status || a.status === status) &&
+    (!category || a.category === category)
+  );
+
+  const list = document.getElementById("articleList");
+  if (!items.length) {
+    list.innerHTML = "<p>Belum ada artikel yang cocok. Tekan Buat Artikel Baru untuk memulai.</p>";
+    return;
+  }
+
+  list.innerHTML = items.map(a => `
+    <div class="article-item">
+      <h3>${escapeHTML(a.title)}</h3>
+      <p>${escapeHTML(a.category)} · ${badge(a.status)}</p>
+      <p class="hint">Jadwal: ${escapeHTML(formatWIB(a.scheduledAt))}</p>
+      ${a.publishedAt ? `<p class="hint">Diterbitkan: ${escapeHTML(formatWIB(a.publishedAt))}</p>` : ""}
+      <div class="actions">
+        <button onclick="editArticle('${a.id}')">Edit</button>
+        <button class="btn-green" onclick="viewArticle('${a.id}')">Lihat</button>
+        <button class="btn-red" onclick="deleteArticle('${a.id}')">Hapus</button>
+      </div>
+    </div>`).join("");
+}
+
+function editArticle(id) {
+  const a = getArticles().find(x => x.id === id);
+  if (!a) return alert("Artikel tidak ditemukan.");
+
+  resetForm();
+  document.getElementById("articleId").value = a.id;
+  document.getElementById("formHeading").textContent = "Edit Artikel";
+  const fields = ["category","title","imageUrl","videoUrl","watermarkMode",
+    "watermarkSize","watermarkPosition","watermarkOpacity","editorialNote",
+    "summary","banner","publisher","status","body"];
+  fields.forEach(k => {
+    const el = document.getElementById(k);
+    if (el && a[k] !== undefined) el.value = a[k];
+  });
+
+  if (a.image && a.image.startsWith("data:")) imageData = a.image;
+  else document.getElementById("imageUrl").value = a.imageUrl || a.image || "";
+  if (a.video && a.video.startsWith("data:")) videoData = a.video;
+
+  if (a.scheduledAt) {
+    const d = new Date(a.scheduledAt);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: TIME_ZONE, year:"numeric",month:"2-digit",day:"2-digit"
+    }).format(d);
+    const time = new Intl.DateTimeFormat("en-GB", {
+      timeZone: TIME_ZONE, hour:"2-digit",minute:"2-digit",hourCycle:"h23"
+    }).format(d);
+    document.getElementById("publishDate").value = parts;
+    document.getElementById("publishTime").value = time;
+  }
+  document.getElementById("sources").innerHTML = "";
+  (a.sources || []).forEach(s => addSource(s.name, s.url));
+  document.getElementById("opacityLabel").textContent = a.watermarkOpacity + "%";
+  document.getElementById("saveButton").textContent =
+    a.status === "draft" ? "Simpan Draf" :
+    a.status === "scheduled" ? "Simpan Jadwal" : "Terbitkan";
+  showSection("form");
+}
+
+function deleteArticle(id) {
+  const a = getArticles().find(x => x.id === id);
+  if (!a) return;
+  if (!confirm(`Hapus artikel "${a.title}" dari daftar prototipe ini?`)) return;
+  saveArticles(getArticles().filter(x => x.id !== id));
+  renderArticles();
+}
+
+function viewArticle(id) {
+  const a = getArticles().find(x => x.id === id);
+  if (!a) return;
+  showSection("form");
+  editArticle(id);
+  previewArticle();
+}
+
+document.getElementById("storageNotice").textContent =
+  "Prototipe: artikel hanya tersimpan di browser perangkat ini. Belum tersambung ke server/database.";
+
+resetForm();
 </script>
-
-<script>
-(function(){
-    var form = document.querySelector("form");
-    var open = form && form.querySelector("[data-open-article-preview]");
-    if (!form || !open) return;
-
-    function value(selector) {
-        var el = form.querySelector(selector);
-        return el ? String(el.value || "").trim() : "";
-    }
-
-    function show() {
-        var old = document.querySelector(".article-preview-dialog");
-        if (old) old.remove();
-
-        var shade = document.createElement("div");
-        shade.className = "article-preview-dialog";
-        shade.style.cssText = "position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:18px;background:#020817e8";
-
-        var card = document.createElement("article");
-        card.style.cssText = "width:min(860px,100%);margin:auto;padding:24px;border:1px solid #496789;border-radius:14px;background:#0b1b30;color:#eef5ff;box-shadow:0 16px 50px #0008";
-
-        var toolbar = document.createElement("div");
-        toolbar.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px";
-
-        var label = document.createElement("strong");
-        label.textContent = "Preview Artikel";
-
-        var close = document.createElement("button");
-        close.type = "button";
-        close.className = "button alt";
-        close.textContent = "Tutup Preview";
-
-        toolbar.append(label, close);
-        card.appendChild(toolbar);
-
-        var note = document.createElement("p");
-        note.textContent = "Pratinjau lokal sementara — belum disimpan atau diterbitkan.";
-        note.style.color = "#9fb1c7";
-        note.style.fontSize = "12px";
-        card.appendChild(note);
-
-        var h1 = document.createElement("h1");
-        h1.textContent = value("[name=title]") || "Judul artikel";
-        h1.style.lineHeight = "1.2";
-        card.appendChild(h1);
-
-        var meta = document.createElement("p");
-        meta.textContent = [value("[name=category]"), value("[name=publisher]") || "OfficialSiGit.com"].filter(Boolean).join(" · ");
-        meta.style.color = "#9fb1c7";
-        card.appendChild(meta);
-
-        var summary = value("[name=summary]");
-        if (summary) {
-            var lead = document.createElement("p");
-            lead.textContent = summary;
-            lead.style.cssText = "font-size:17px;font-weight:700;line-height:1.55;color:#d6e4f4";
-            card.appendChild(lead);
-        }
-
-        var content = document.createElement("div");
-        content.style.cssText = "font-size:16px;line-height:1.8;color:#e8eef7";
-
-        value("[name=content]").split(/\n\s*\n/).map(function(x){
-            return x.trim();
-        }).filter(Boolean).forEach(function(text){
-            var p = document.createElement("p");
-            p.textContent = text;
-            content.appendChild(p);
-        });
-
-        if (!content.children.length) {
-            var empty = document.createElement("p");
-            empty.textContent = "Isi artikel akan tampil di sini.";
-            content.appendChild(empty);
-        }
-
-        card.appendChild(content);
-
-        var editorial = value("[name=editorial_note]");
-        var rows = form.querySelectorAll(".source-row");
-        var sources = [];
-
-        rows.forEach(function(row){
-            var l = row.querySelector("[name^=source_label]");
-            var u = row.querySelector("[name^=source_url]");
-
-            if (l && u && l.value.trim() && u.value.trim()) {
-                sources.push({label:l.value.trim(), url:u.value.trim()});
-            }
-        });
-
-        if (editorial || sources.length) {
-            var box = document.createElement("aside");
-            box.style.cssText = "margin-top:20px;padding:14px;border:1px solid #3b6d86;border-left:4px solid #25e7ff;border-radius:10px;background:#0b2a40";
-
-            var strong = document.createElement("strong");
-            strong.textContent = "Transparansi editorial";
-            box.appendChild(strong);
-
-            if (editorial) {
-                var ep = document.createElement("p");
-                ep.textContent = editorial;
-                box.appendChild(ep);
-            }
-
-            if (sources.length) {
-                var sp = document.createElement("p");
-                sp.textContent = "Sumber yang dapat diperiksa:";
-                box.appendChild(sp);
-
-                var ul = document.createElement("ul");
-
-                sources.forEach(function(src){
-                    var li = document.createElement("li");
-                    var a = document.createElement("a");
-                    a.textContent = src.label;
-                    a.href = src.url;
-                    a.target = "_blank";
-                    a.rel = "noopener noreferrer";
-                    li.appendChild(a);
-                    ul.appendChild(li);
-                });
-
-                box.appendChild(ul);
-            }
-
-            card.appendChild(box);
-        }
-
-        var status = document.createElement("p");
-        status.style.cssText = "margin-top:18px;color:#9fb1c7;font-size:13px";
-        status.textContent = "Status: " + (value("[name=action]") || value("[name=status]") || "Terbitkan sekarang");
-
-        var d = value("[name=scheduled_date]");
-        var t = value("[name=scheduled_time]");
-
-        if (d && t) status.textContent += " · " + d + " " + t + " WIB";
-        card.appendChild(status);
-
-        shade.appendChild(card);
-        document.body.appendChild(shade);
-
-        close.onclick = function(){ shade.remove(); };
-        shade.onclick = function(e){
-            if (e.target === shade) shade.remove();
-        };
-    }
-
-    open.addEventListener("click", show);
-})();
-</script>
-
-<script defer src="/assets/admin-upload-optimizer.js?v=20261027-upload-fast-v1"></script>
-';
-
-echo admin_page('Tambah Artikel', $body);
-              
+</body>
+</html>
